@@ -2,6 +2,14 @@
  * Rideau Canal Monitoring Dashboard - Backend Server (CORRECTED)
  * Serves the dashboard and provides API endpoints for real-time data
  */
+// const crypto = require('crypto');
+
+// if (!globalThis.crypto) {
+//   globalThis.crypto = {
+//     getRandomValues: (arr) => crypto.randomFillSync(arr),
+//     randomUUID: () => crypto.randomUUID()
+//   };
+// }
 
 const express = require('express');
 const { CosmosClient } = require('@azure/cosmos');
@@ -17,6 +25,7 @@ app.use(cors());
 app.use(express.json());
 app.use(express.static('public'));
 
+
 // Initialize Cosmos DB Client
 const cosmosClient = new CosmosClient({
     endpoint: process.env.COSMOS_ENDPOINT,
@@ -25,6 +34,27 @@ const cosmosClient = new CosmosClient({
 
 const database = cosmosClient.database(process.env.COSMOS_DATABASE);
 const container = database.container(process.env.COSMOS_CONTAINER);
+
+// Test Cosmos DB connection
+(async () => {
+    try {
+        console.log("🔍 Verifying Cosmos DB connection...");
+        const { resources } = await container.items
+            .query("SELECT TOP 1 * FROM c")
+            .fetchAll();
+
+        if (resources.length > 0) {
+            console.log("🟢 Cosmos DB connection OK — fetched item:");
+            console.log(JSON.stringify(resources[0], null, 2));
+        } else {
+            console.log("🟡 Cosmos DB connected, but container is empty.");
+        }
+    } catch (err) {
+        console.error("🔴 Cosmos DB connection FAILED:", err.message);
+    }
+})();
+
+
 
 /**
  * API Endpoint: Get latest readings for all locations
